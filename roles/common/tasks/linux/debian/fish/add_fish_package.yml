@@ -1,0 +1,16 @@
+# add fish repository
+- name: Add fish repository
+  ansible.builtin.template:
+    src: debian/fish_repo.j2
+    dest: /etc/apt/sources.list.d/shells:fish.list
+    owner: root
+    group: root
+    mode: "0644"
+
+# add fish shell key
+- name: Adds debian fish shell key
+  ansible.builtin.shell: |
+    curl -fsSL https://download.opensuse.org/repositories/shells:fish/Debian_{{ ansible_distribution_major_version }}/Release.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/fish.gpg > /dev/null
+  args:
+    executable: /bin/bash
+    creates: /etc/apt/trusted.gpg.d/fish.gpg

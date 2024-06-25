@@ -1,0 +1,17 @@
+- name: Apply common role to all servers
+  hosts: proxmox
+  gather_facts: true
+  vars:
+    cleanup_cloud_images: true
+  roles:
+    - common
+    #- proxmox
+
+
+    # cloud_images:
+    #   - name: debian-12
+    #     id: 0
+    #     url: "https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2"
+    #   - name: rocky-9
+    #     id: 1
+    #     url: "https://dl.rockylinux.org/pub/rocky/9/images/x86_64/Rocky-9-GenericCloud-Base.latest.x86_64.qcow2"

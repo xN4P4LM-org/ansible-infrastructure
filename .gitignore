@@ -1,0 +1,18 @@
+# ansible vault
+vault/
+
+# inventory
+inventory/*
+!inventory/default
+
+# Nameserver related files
+nameserver*
+
+# archive
+archive/
+
+# template
+template.yml
+
+# nameserver zones
+*.net

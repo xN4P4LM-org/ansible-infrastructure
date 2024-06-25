@@ -1,0 +1,6 @@
+---
+# ip_forwarding handler to restart sysctl
+- name: Restart sysctl
+  command: "sysctl -p"
+  when: ip_forwarding.changed
+  tags: wireguard

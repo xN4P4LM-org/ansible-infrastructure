@@ -1,0 +1,6 @@
+# add fish shell ppa add-apt-repository ppa:fish-shell/release-3
+- name: Add the fish shell repository
+  ansible.builtin.apt_repository:
+    repo: ppa:fish-shell/release-3
+    state: present
+    update_cache: true

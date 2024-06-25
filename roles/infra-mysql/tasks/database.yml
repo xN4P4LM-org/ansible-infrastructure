@@ -1,0 +1,32 @@
+- name: Allow connection from Diana's Laptop
+  community.mysql.mysql_user:
+    name: "{{ personal_access_user }}"
+    password: "{{ personal_access_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+    host: "192.168.5.69"
+    column_case_sensitive: true
+
+- name: Allow root to connect from NS1
+  community.mysql.mysql_user:
+    name: "{{ pdns_admin_db_user }}"
+    password: "{{ mysql_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+    host: "ns1.internal.cloudapp.net"
+    column_case_sensitive: true
+
+
+- name: Allow root to connect from NS2
+  community.mysql.mysql_user:
+    name: "{{ pdns_admin_db_user }}"
+    password: "{{ mysql_password }}"
+    priv: '*.*:ALL,GRANT'
+    state: present
+    host: "ns2.internal.cloudapp.net"
+    column_case_sensitive: true
+  no_log: true
+
+- name: Flush privileges
+  community.mysql.mysql_query:
+    query: "FLUSH PRIVILEGES"

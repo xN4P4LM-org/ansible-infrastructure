@@ -1,0 +1,15 @@
+- name: Add the user xn4p4lm, and append the group sudo and wheel to the user's groups
+  ansible.builtin.user:
+    name: xn4p4lm
+    shell: /bin/bash
+    groups: sudo
+    append: true
+
+- name: Enable sudo with no password for the group sudo and remove the password line
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
+    state: present
+    regexp: "^%sudo"
+    backup: true
+    validate: "/usr/sbin/visudo -cf %s"

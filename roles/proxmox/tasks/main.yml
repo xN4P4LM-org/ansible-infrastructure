@@ -1,0 +1,4 @@
+- name: Downlaod cloud-images
+  ansible.builtin.include_tasks: cloud-img/main.yml
+  # when cloud_images is defined as a list and has at least one element
+  when: cloud_images|selectattr("url", "defined")|list|length >0

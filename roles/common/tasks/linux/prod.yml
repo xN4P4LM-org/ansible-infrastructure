@@ -1,0 +1,14 @@
+# Role: common
+# File: tasks/prod.yml
+# Description: This task updates the production environment hosts.
+# Areas:
+# - update SSH host keys
+# - update SSH configuration
+
+- name: Copy the prod_authorized_keys to the user 'xn4p4lm'
+  ansible.builtin.copy:
+    src: prod_authorized_keys
+    dest: /home/xn4p4lm/.ssh/authorized_keys
+    owner: xn4p4lm
+    group: xn4p4lm
+    mode: "0600"

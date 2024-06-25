@@ -1,0 +1,19 @@
+---
+- name: Update MOTD
+  ansible.builtin.import_tasks: motd.yml
+  become: true
+  when: inventory_hostname in groups['all']
+
+- name: Run Debian Tasks
+  ansible.builtin.import_tasks: debian/main.yml
+  become: true
+  when: ansible_os_family == 'Debian'
+
+- name: Install fish shell
+  ansible.builtin.import_tasks: fish.yml
+  become: true
+
+- name: Run RedHat Tasks
+  ansible.builtin.import_tasks: redhat/main.yml
+  become: true
+  when: ansible_os_family == 'RedHat'
