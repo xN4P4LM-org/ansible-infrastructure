@@ -1,0 +1,6 @@
+---
+- name: Install Server
+  ansible.builtin.import_tasks: server.yml
+
+- name: Install Client
+  ansible.builtin.import_tasks: client.yml

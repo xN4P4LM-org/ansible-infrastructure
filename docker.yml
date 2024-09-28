@@ -1,0 +1,12 @@
+- name: Setup docker 
+  hosts: docker
+  become: true
+
+  vars:
+    pip_install_packages:
+      - name: docker
+
+  roles:
+    - common
+    - geerlingguy.pip
+    - geerlingguy.docker

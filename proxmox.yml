@@ -1,0 +1,7 @@
+- name: Apply common role to all servers
+  hosts: proxmox
+  gather_facts: true
+  vars:
+    cleanup_cloud_images: true
+  roles:
+    - common

@@ -1,0 +1,14 @@
+---
+# Disable swap for kubernetes
+- name: Disable Swap
+  ansible.builtin.command: swapoff -a
+  when: ansible_swaptotal_mb > 0
+  changed_when: ansible_swaptotal_mb > 0
+
+# Remove swap from /etc/fstab
+- name: Remove swap from /etc/fstab
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^.*\sswap\s.*$'
+    replace: ""
+    backup: true

@@ -1,0 +1,6 @@
+# Role: common
+# File: tasks/infra.yml
+# Description: This task updates the infrastructure hosts.
+# Areas:
+# - update SSH host keys
+# - update SSH configuration

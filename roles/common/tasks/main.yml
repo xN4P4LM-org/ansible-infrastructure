@@ -1,0 +1,5 @@
+# roles/common/tasks/main.yml
+- name: Run linux Tasks
+  ansible.builtin.import_tasks: linux/main.yml
+  become: true
+  when: (ansible_facts['os_family'] != 'FreeBSD' and ansible_facts['os_family'] != 'Windows')

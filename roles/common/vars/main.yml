@@ -1,0 +1,18 @@
+default_debian_packages:
+  - gpg
+  - net-tools
+  - python3
+  - vim
+  - curl
+  - sudo
+  - unzip
+  - wget
+  - zip
+  - htop
+  - libmariadb-dev
+  - dnsutils
+  - jq
+  - cloud-init
+  - qemu-guest-agent
+  - gzip
+  - tar

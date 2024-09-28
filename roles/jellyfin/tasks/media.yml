@@ -1,0 +1,13 @@
+- name: Create Jellyfin media directory
+  ansible.builtin.file:
+    path: /jellyfin
+    state: directory
+    mode: "0755"
+
+- name: Mount NFS share for Jellyfin
+  ansible.posix.mount:
+    src: "{{ jellyfin_nfs_server }}:{{ jellyfin_nfs_path }}"
+    path: /jellyfin
+    fstype: nfs
+    state: mounted
+    opts: rw,sync,hard

@@ -1,0 +1,37 @@
+- name: Ensure the /etc/apt/trusted.gpg.d directory exists
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d
+    state: directory
+    mode: "0755"
+
+- name: Download Grafana GPG key
+  ansible.builtin.get_url:
+    url: https://apt.grafana.com/gpg.key
+    dest: "/tmp/grafana.gpg.key"
+    mode: "0644"
+
+- name: Install the Grafana GPG key
+  ansible.builtin.shell:
+    cmd: gpg --dearmor < /tmp/grafana.gpg.key | tee /etc/apt/trusted.gpg.d/grafana.gpg > /dev/null
+  args:
+    creates: /etc/apt/trusted.gpg.d/grafana.gpg
+  no_log: true
+
+- name: Add Grafana repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/trusted.gpg.d/grafana.gpg] https://apt.grafana.com stable main"
+    state: present
+
+- name: Install Grafana
+  ansible.builtin.apt:
+    name: grafana
+    state: present
+  tags: packages
+  notify: Restart Grafana
+
+- name: Ensure Grafana is enabled and running
+  ansible.builtin.systemd:
+    name: grafana-server
+    enabled: true
+    state: started
+  tags: packages

@@ -1,0 +1,8 @@
+Types: deb
+URIs: https://repo.jellyfin.org/{{ ansible_distribution | lower }}
+Suites: {{ ansible_distribution_release }}
+Components: main
+{% if ansible_architecture == 'x86_64' %}
+Architectures: amd64
+{% endif %}
+Signed-By: /etc/apt/trusted.gpg.d/jellyfin.gpg

@@ -1,0 +1,7 @@
+---
+# Set bridge module to be loaded
+- name: Ensure bridge module is loaded
+  community.general.modprobe:
+    name: br_netfilter
+    state: present
+    persistent: present

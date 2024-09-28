@@ -1,0 +1,18 @@
+---
+# Set ip forwarding on in /proc and in the sysctl file and reload if necessary
+- name: Enable IPv4 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: true
+
+# Enable /proc/sys/net/bridge/bridge-nf-call-iptables
+- name: Enable bridge-nf-call-iptables
+  ansible.posix.sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: true

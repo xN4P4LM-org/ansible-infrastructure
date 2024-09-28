@@ -1,0 +1,8 @@
+---
+# This is the per-host variables file
+# create a new file for each host in the inventory
+# that has any specific variables that need to be set
+# for that host
+
+# examples:
+#ip_address: "192.168.1.1"

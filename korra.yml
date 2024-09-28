@@ -1,0 +1,5 @@
+- name: Apply common role to all servers
+  hosts: all
+  gather_facts: true
+  roles:
+    - common

@@ -1,0 +1,22 @@
+---
+### apt systems ###
+
+#### debian systems ####
+# - name: Add repository
+#   ansible.builtin.import_tasks: debian/fish/add_fish_package.yml
+#   when: ansible_distribution == 'Debian'
+# #### ubuntu systems ####
+# - name: Add repository
+#   ansible.builtin.import_tasks: debian/ubuntu/add_fish_package.yml
+#   when: ansible_distribution == 'Ubuntu'
+#### all apt systems ####
+- name: Install fish shell
+  ansible.builtin.import_tasks: debian/fish/install_fish.yml
+  when: ansible_os_family == 'Debian'
+# install fish shell
+### end apt systems ###
+### yum systems ###
+- name: Install fish shell
+  ansible.builtin.import_tasks: redhat/install_fish.yml
+  when: ansible_os_family == 'RedHat'
+### end yum systems ###

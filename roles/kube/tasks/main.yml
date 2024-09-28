@@ -1,0 +1,20 @@
+---
+# run task to disable swap
+- name: Running task to disable swap
+  ansible.builtin.import_tasks: disableSwap.yml
+
+# run task to enable bridge module
+- name: Running task to enable bridge module
+  ansible.builtin.import_tasks: enableBridgeModule.yml
+
+# run task to set sysctl
+- name: Running task to set sysctl
+  ansible.builtin.import_tasks: sysctl.yml
+
+# run task to install required packages
+- name: Running task to install required packages
+  ansible.builtin.import_tasks: requiredPackages.yml
+
+# add hosts to /etc/hosts
+- name: Running task to add hosts to /etc/hosts
+  ansible.builtin.import_tasks: addhosts.yml

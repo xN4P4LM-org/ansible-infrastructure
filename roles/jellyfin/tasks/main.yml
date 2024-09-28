@@ -1,0 +1,12 @@
+---
+- name: Install Required Packages
+  ansible.builtin.import_tasks: required.yml
+
+- name: Install Jellyfin
+  ansible.builtin.import_tasks: jellyfin.yml
+
+# - name: Configure Jellyfin
+#   ansible.builtin.import_tasks: config.yml
+
+- name: Configure media directories
+  ansible.builtin.import_tasks: media.yml

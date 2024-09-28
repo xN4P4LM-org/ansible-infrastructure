@@ -1,0 +1,38 @@
+- name: Ensure the /etc/apt/trusted.gpg.d directory exists
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d
+    state: directory
+    mode: "0755"
+
+- name: Download Grafana GPG key
+  ansible.builtin.get_url:
+    url: https://repos.influxdata.com/influxdata-archive_compat.key
+    dest: "/tmp/telegraf.key"
+    mode: "0644"
+
+- name: Verify the Grafana GPG key
+  ansible.builtin.shell:
+    cmd: echo '393e8779c89ac8d958f81f942f9ad7fb82a25e133faddaf92e15b16e6ac9ce4c /tmp/telegraf.key' | sha256sum -c
+  args:
+    executable: /bin/bash
+  register: result
+  no_log: true
+
+- name: Copy the Grafana GPG key
+  ansible.builtin.shell:
+    cmd: cat /tmp/telegraf.key | gpg --dearmor | tee /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg > /dev/null
+  args:
+    executable: /bin/bash
+    creates: /etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg
+  no_log: true
+
+- name: Add Telegraf repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive_compat.gpg] https://repos.influxdata.com/debian stable main"
+    state: present
+
+- name: Install Telegraf
+  ansible.builtin.apt:
+    name: telegraf
+    state: present
+  tags: packages
