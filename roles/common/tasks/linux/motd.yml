@@ -1,0 +1,49 @@
+# Role: common
+# File: tasks/motd.yml
+# Description: This task updates the Message of the Day (MOTD) on the target systems.
+- name: Capture files to delete
+  ansible.builtin.find:
+    paths: /etc/update-motd.d/
+    file_type: "any"
+    excludes:
+      - "10-warning"
+      - "20-body"
+  register: found_files
+
+- name: Delete non managed files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ found_files.files }}"
+
+- name: Copy motd.txt to /etc/motd
+  ansible.builtin.copy:
+    src: motd.txt
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+
+- name: Copy motd_warning.j2 to /etc/update-motd.d/10-warning
+  ansible.builtin.template:
+    src: motd_warning.j2
+    dest: /etc/update-motd.d/10-warning
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
+
+- name: Copy motd_host.j2 to /etc/update-motd.d/20-body
+  ansible.builtin.template:
+    src: motd_host.j2
+    dest: /etc/update-motd.d/20-body
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
+
+- name: Disable print last login
+  ansible.builtin.replace:
+    path: /etc/ssh/sshd_config
+    regexp: "^#PrintLastLog yes"
+    replace: "PrintLastLog no"
+    backup: true
+  notify: Restart sshd service ({{ ansible_os_family }})

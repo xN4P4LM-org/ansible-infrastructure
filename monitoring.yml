@@ -1,0 +1,37 @@
+---
+# - name: Configure Common configuration
+#   hosts: monitoring
+#   become: true
+#   roles:
+#     - common
+
+# - name: Setting up Prometheus
+#   hosts: prometheus
+#   become: true
+#   roles:
+#     - prometheus.prometheus.prometheus
+
+# - name: Setting up Grafana
+#   hosts: grafana
+#   become: true
+#   roles:
+#     - grafana
+
+# - name: Setting up InfluxDB
+#   hosts: influxdb
+#   become: true
+#   roles:
+#     - influxdb
+
+- name: Setting up Loki
+  hosts: loki
+  become: true
+  roles:
+    - geerlingguy.docker
+    - loki
+
+# - name: Setting up Telegraf
+#   hosts: telegraf
+#   become: true
+#   roles:
+#     - telegraf

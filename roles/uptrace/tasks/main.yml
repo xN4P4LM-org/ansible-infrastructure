@@ -1,0 +1,16 @@
+---
+
+## download uptrace deb package
+- name: Download uptrace deb package
+  ansible.builtin.get_url:
+    url: "https://github.com/uptrace/uptrace/releases/download/v1.7.7/uptrace_linux_amd64"
+    dest: /home/ansible/uptrace.deb
+    mode: '0600'
+  delegate_to: localhost
+
+## install uptrace deb package
+- name: Install uptrace deb package
+  ansible.builtin.package:
+    name: /home/ansible/uptrace.deb
+    state: present
+  delegate_to: localhost

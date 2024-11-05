@@ -1,0 +1,67 @@
+---
+- name: Ensure Backup directory exists
+  ansible.builtin.file:
+    path: /etc/bird.bak.d
+    state: directory
+    mode: "0755"
+
+- name: Backup existing bird configuration # noqa: command-instead-of-shell
+  ansible.builtin.shell:
+    cmd: "cp -r /etc/bird /etc/bird.bak.d/{{ ansible_date_time.date }}"
+    creates: /etc/bird.bak.d/{{ ansible_date_time.date }}
+
+- name: Clean up bird configuration
+  ansible.builtin.file:
+    path: /etc/bird
+    state: absent
+
+- name: Find all directories from dynamic root path
+  ansible.builtin.find:
+    paths: "{{ role_path }}/templates/rootfs/etc/bird"
+    file_type: directory
+    recurse: true
+  delegate_to: localhost
+  run_once: true
+  register: directory_structure
+
+- name: Ensure required directories exist dynamically
+  ansible.builtin.file:
+    path: "{{ item.path | regex_replace('^.*rootfs', '') }}"
+    state: directory
+    mode: "0755"
+  loop: "{{ directory_structure.files }}"
+
+- name: Copy bird envar file
+  ansible.builtin.copy:
+    src: rootfs/etc/bird/envvars
+    dest: /etc/bird/envvars
+    mode: "0644"
+
+- name: Find all template files from dynamic root path
+  ansible.builtin.find:
+    paths: "{{ role_path }}/templates/rootfs/etc/bird"
+    patterns: "*.conf.j2"
+    recurse: true
+  delegate_to: localhost
+  run_once: true
+  register: template_files
+
+- name: Copy bird configuration templates dynamically
+  ansible.builtin.template:
+    src: "{{ item.path }}"
+    dest: "{{ item.path | regex_replace('^.*rootfs', '') | regex_replace('.j2$', '') }}"
+    mode: "0644"
+  loop: "{{ template_files.files }}"
+  notify: Reload bird
+
+- name: Create peering connections
+  ansible.builtin.template:
+    src: rootfs/etc/bird/conf.d/peers/peer_template_conf.j2
+    dest: /etc/bird/conf.d/peers/{{ item.name }}.conf
+    mode: "0644"
+  loop: "{{ bird_peers }}"
+  notify: Reload bird
+  when:
+    - bird_peers is defined
+    - networks | selectattr('type', 'equalto', 'ixp') is defined
+    - networks | selectattr('type', 'equalto', 'ixp') | list | length > 0

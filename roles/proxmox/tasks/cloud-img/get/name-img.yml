@@ -1,0 +1,5 @@
+- name: Download qcow2 cloud images for {{ item.name }}
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "/root/cloud-images/{{ item.name }}.qcow2"
+    mode: '0644'

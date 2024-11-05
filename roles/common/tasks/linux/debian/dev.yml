@@ -1,0 +1,6 @@
+# Role: common
+# File: tasks/dev.yml
+# Description: This task updates the development environment hosts.
+# Areas:
+# - update SSH host keys
+# - update SSH configuration

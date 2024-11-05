@@ -1,0 +1,6 @@
+# Cleans up all tmp files
+- name: Restart Influxdb
+  ansible.builtin.systemd:
+    name: influxdb
+    state: restarted
+    enabled: true

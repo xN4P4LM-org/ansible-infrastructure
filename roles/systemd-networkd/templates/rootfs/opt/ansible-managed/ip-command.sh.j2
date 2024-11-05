@@ -1,0 +1,7 @@
+{% for command in ip_commands %}
+{% if command.name == "multicast"%}
+# Change multicast state for {{ command.interface }} to {{ command.state }}
+ip link set multicast {{ command.state }} dev {{ command.interface }}
+
+{% endif %}
+{% endfor %}

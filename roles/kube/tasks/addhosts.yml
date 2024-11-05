@@ -1,0 +1,11 @@
+---
+- name: Add hostname to /etc/hosts - {{ item.hostname }}
+  ansible.builtin.lineinfile:
+    path: /etc/hosts
+    line: "{{ item.ip }} {{ item.hostname }}"
+    state: present
+    mode: "644"
+    create: true
+    backup: true
+  with_items: "{{ static_hosts }}"
+  when: static_hosts is defined

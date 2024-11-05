@@ -1,0 +1,7 @@
+---
+- name: Reload bird
+  ansible.builtin.command:
+    cmd: birdc configure
+  register: bird_configure
+  when: bird_enabled
+  changed_when: "bird_configure.rc == 0"

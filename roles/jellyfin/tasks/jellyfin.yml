@@ -1,0 +1,46 @@
+- name: Ensure the /etc/apt/trusted.gpg.d directory exists
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d
+    state: directory
+    mode: "0755"
+
+- name: Download Jellyfin GPG key
+  ansible.builtin.get_url:
+    url: https://repo.jellyfin.org/jellyfin_team.gpg.key
+    dest: "/tmp/jellyfin.gpg.key"
+    mode: "0644"
+
+- name: remove old Jellyfin GPG key
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d/jellyfin.gpg
+    state: absent
+
+- name: Install the Jellyfin GPG key
+  ansible.builtin.shell:
+    cmd: gpg --dearmor -o /etc/apt/trusted.gpg.d/jellyfin.gpg /tmp/jellyfin.gpg.key
+  #no_log: true
+
+- name: Create the Jellyfin sources list
+  template:
+    src: jellyfin.sources.j2
+    dest: /etc/apt/sources.list.d/jellyfin.sources
+    owner: root
+    group: root
+    mode: 0644
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install Jellyfin
+  ansible.builtin.apt:
+    name: jellyfin
+    state: present
+  tags: packages
+
+- name: Ensure Jellyfin is enabled and running
+  ansible.builtin.systemd:
+    name: jellyfin
+    enabled: true
+    state: started
+  tags: packages

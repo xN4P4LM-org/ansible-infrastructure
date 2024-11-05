@@ -1,0 +1,17 @@
+- name: Download InfluxDB
+  ansible.builtin.get_url:
+    url: "{{ influx_db_server_url }}"
+    dest: /tmp/influxdb.deb
+    mode: "0640"
+
+- name: Install InfluxDB
+  ansible.builtin.apt:
+    deb: /tmp/influxdb.deb
+    state: present
+  notify: Restart Influxdb
+
+- name: Start influxdb on boot
+  ansible.builtin.systemd:
+    name: influxdb
+    enabled: true
+    state: started

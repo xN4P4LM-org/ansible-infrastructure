@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodically run rpki-client
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

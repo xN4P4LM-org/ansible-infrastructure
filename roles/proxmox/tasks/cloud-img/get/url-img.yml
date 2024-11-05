@@ -1,0 +1,5 @@
+- name: Downaloding qcow2 cloud image from url
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "/root/cloud-images/"
+    mode: '0644'

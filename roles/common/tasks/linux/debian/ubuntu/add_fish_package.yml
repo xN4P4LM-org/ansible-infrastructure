@@ -1,0 +1,13 @@
+- name: Remove the fish shell package if it is installed
+  ansible.builtin.apt:
+    name: fish
+    state: absent
+    update_cache: true
+  when: ansible_distribution == 'Ubuntu'
+
+# add fish shell ppa add-apt-repository ppa:fish-shell/release-3
+- name: Add the fish shell repository
+  ansible.builtin.apt_repository:
+    repo: ppa:fish-shell/release-3
+    state: present
+    update_cache: true

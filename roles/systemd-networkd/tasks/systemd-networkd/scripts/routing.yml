@@ -1,0 +1,30 @@
+---
+- name: Create ansible scripts directory
+  ansible.builtin.file:
+    path: /opt/ansible-managed
+    state: directory
+    mode: "0755"
+    group: ansible
+    owner: root
+
+- name: Generate routing script from template
+  ansible.builtin.template:
+    src: rootfs/opt/ansible-managed/routing.sh.j2
+    dest: /opt/ansible-managed/routing.sh
+    mode: "0755"
+
+- name: Execute routing script
+  ansible.builtin.shell: /opt/ansible-managed/routing.sh
+  args:
+    executable: /bin/bash
+  register: routing_script
+  failed_when: routing_script.rc != 0
+  changed_when: false
+
+- name: Create cronjob for routing script
+  ansible.builtin.cron:
+    name: "routing"
+    job: "/opt/ansible-managed/routing.sh"
+    minute: "*/5"
+    state: present
+    user: root

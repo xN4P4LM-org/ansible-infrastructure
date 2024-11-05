@@ -1,0 +1,4 @@
+influx_db_client_version: 2.7.5
+influx_db_client_url: "https://download.influxdata.com/influxdb/releases/influxdb2-client-{{ influx_db_client_version }}-linux-amd64.tar.gz"
+influx_db_server_version: "2.7.6-1"
+influx_db_server_url: "https://download.influxdata.com/influxdb/releases/influxdb2_{{ influx_db_server_version }}_amd64.deb"

@@ -1,0 +1,95 @@
+---
+- name: Import role rpki-client
+  ansible.builtin.import_role:
+    name: rpki-client
+
+- name: Import roles for stayrtr and rpki-client
+  ansible.builtin.import_role:
+    name: stayrtr
+
+- name: Clone bird repository
+  ansible.builtin.git:
+    repo: https://gitlab.nic.cz/labs/bird
+    dest: /var/tmp/bird
+    version: v3.0-alpha2
+    force: true
+  register: bird_git
+  changed_when: "bird_git.changed == true"
+
+- name: Install bird dependencies
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - gcc
+    - autoconf
+    - make
+    - bison
+    - m4
+    - flex
+    - libncurses-dev
+    - libreadline-dev
+    - libssh-dev
+
+- name: Build headers for bird
+  ansible.builtin.command:
+    cmd: autoheader
+  args:
+    chdir: /var/tmp/bird
+  register: bird_headers
+  changed_when: "bird_headers.rc == 0"
+
+- name: Create makefile for bird
+  ansible.builtin.command:
+    cmd: autoconf
+  args:
+    chdir: /var/tmp/bird
+  register: bird_configure
+  changed_when: "bird_configure.rc == 0"
+
+- name: Configure bird
+  ansible.builtin.shell: # noqa: command-instead-of-shell
+    cmd: ./configure --enable-libssh --enable-pthreads --enable-memcheck --with-runtimedir=/usr/local/var/run --with-protocols="all"
+  args:
+    chdir: /var/tmp/bird
+  register: bird_configure
+  changed_when: "bird_configure.rc == 0"
+
+- name: Build bird
+  ansible.builtin.command:
+    cmd: make
+  args:
+    chdir: /var/tmp/bird
+  register: bird_build
+  changed_when: "bird_build.rc == 0"
+
+- name: Stop Running Bird
+  ansible.builtin.systemd:
+    name: bird
+    state: stopped
+  register: bird_stop
+  changed_when: "bird_stop.changed == true"
+
+- name: Remove existing bird # noqa: ignore-errors
+  ansible.builtin.command:
+    cmd: find / -name {{ item }} -type f -exec rm -f {} \;
+  loop:
+    - bird
+    - birdc
+    - birdcl
+  changed_when: "bird_stop.changed == true"
+  ignore_errors: true
+
+- name: Install bird
+  ansible.builtin.command:
+    cmd: make install
+  args:
+    chdir: /var/tmp/bird
+  register: bird_install
+  changed_when: "bird_install.rc == 0"
+
+- name: Ensure /usr/lib/bird exists
+  ansible.builtin.file:
+    path: /usr/lib/bird
+    state: directory
+    mode: "0755"

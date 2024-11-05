@@ -1,0 +1,140 @@
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+{% if nft_static_definitions is defined %}
+{% for item in nft_static_definitions %}
+
+{% endfor %}
+{% endif %}
+
+
+
+
+
+###---------------###
+### Global Tables ###
+###---------------###
+
+table ip globalv4 {
+
+    chain inbound {
+        type filter hook input priority 0 ; policy drop;
+
+        # Allow traffic from established and related packets, drop invalid
+        ct state vmap { established : accept, related : accept, invalid : drop }
+
+        # icmp
+        icmp type echo-request accept
+
+        # allow loopback traffic, anything else jump to chain for further evaluation
+        iifname vmap { lo : accept, $DEVICE_ASTOUND : jump astound_incoming, $DEVICE_CENTURYLINK : jump centurylink_incoming, $DEVICE_MGMT : jump mgmt_incoming }
+    }
+
+    chain outbound {
+        type filter hook output priority 0; policy accept;
+
+        oifname vmap { lo : accept, $DEVICE_ASTOUND : jump astound_outgoing, $DEVICE_CENTURYLINK : jump centurylink_outgoing, $DEVICE_MGMT : jump mgmt_outgoing }
+    }
+
+    ## Loopback Interface
+    ## Interface: lo
+
+    chain loopback_incoming {
+        # icmp
+        icmp type echo-request accept
+
+        iifname lo accept
+    }
+
+    chain loopback_outgoing {
+        oifname lo accept
+    }
+
+
+    # ## ISP 1 (Astound)
+    # ## Interface: eno1
+
+    chain astound_incoming {
+        ip saddr $PUBLIC_IP drop
+    }
+
+
+    chain astound_outgoing {
+        oifname $DEVICE_ASTOUND accept
+        ip daddr $SUBNET_192 drop
+        ip daddr $SUBNET_172 drop
+        ip daddr $SUBNET_10 drop
+        ip daddr $SUBNET_100_64 drop
+        ip daddr $PUBLIC_BLOCK_V4 drop
+
+        udp dport 53000 drop
+    }
+
+    # ## ISP 2 (CenturyLink)
+    # ## Interface: eno2
+
+    chain centurylink_incoming {
+        ip saddr $PUBLIC_IP drop
+    }
+
+
+    chain centurylink_outgoing {
+        oifname $DEVICE_CENTURYLINK accept
+        ip daddr $SUBNET_192 drop
+        ip daddr $SUBNET_172 drop
+        ip daddr $SUBNET_10 drop
+        ip daddr $SUBNET_100_64 drop
+        ip daddr $PUBLIC_BLOCK_V4 drop
+
+        udp dport 52000 drop
+    }
+
+    ## Management Network
+    ## Interface: enp1s0f1
+
+    chain mgmt_incoming {
+        # icmp
+        icmp type echo-request accept
+
+        ip saddr $MGMT_NET accept
+
+    }
+
+    chain mgmt_outgoing {
+        ip daddr $MGMT_NET accept
+    }
+}
+
+# IPv6 Firewall
+
+table ip6 globalv6 {
+    chain prerouting {
+        type nat hook prerouting priority 100; policy accept;
+    }
+
+    chain incoming {
+        type filter hook input priority 0; policy drop;
+
+        # established/related connections
+        ct state established,related accept
+
+        # invalid connections
+        ct state invalid drop
+
+        # loopback interface
+        iifname lo accept
+
+        # icmp
+        # routers may also want: mld-listener-query, nd-router-solicit
+        icmpv6 type { echo-request, nd-neighbor-solicit } accept
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+
+    chain postrouting {
+        type nat hook postrouting priority 100; policy accept;
+    }
+}

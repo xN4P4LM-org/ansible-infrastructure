@@ -1,0 +1,59 @@
+---
+- name: Ensure stay rtr isn't installed
+  ansible.builtin.package:
+    name: stayrtr
+    state: absent
+
+# import the go tasks
+- name: Updating go
+  ansible.builtin.import_tasks: installgo.yml
+
+- name: Install go packages
+  ansible.builtin.command: /usr/local/go/bin/go install github.com/bgp/stayrtr/cmd/stayrtr@latest
+  args:
+    creates: /root/go/bin/stayrtr
+  become: true
+  register: go_packages
+  changed_when: go_packages is changed
+
+- name: Create _stayrtr user
+  ansible.builtin.user:
+    name: _stayrtr
+    comment: "StayRTR"
+    home: /etc/octorpki
+    shell: /usr/sbin/nologin
+    system: true
+    createhome: false
+    state: present
+
+- name: Move stayrtr binary
+  ansible.builtin.copy:
+    src: /root/go/bin/stayrtr
+    dest: /usr/local/bin/stayrtr
+    mode: "0755"
+    remote_src: true
+
+  become: true
+  changed_when: false
+
+- name: Copy env file
+  ansible.builtin.copy:
+    src: rootfs/etc/default/stayrtr
+    dest: /etc/default/stayrtr
+    mode: "0644"
+
+- name: Copy systemd service file
+  ansible.builtin.copy:
+    src: rootfs/usr/lib/systemd/system/stayrtr.service
+    dest: /usr/lib/systemd/system/stayrtr.service
+    mode: "0644"
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Start stayrtr
+  ansible.builtin.systemd:
+    name: stayrtr
+    enabled: true
+    state: started

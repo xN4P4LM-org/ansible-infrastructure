@@ -1,0 +1,14 @@
+
+# create the powerdns group
+- name: Add the group pdns
+  ansible.builtin.group:
+    name: pdns
+    state: present
+
+# create the powerdns user
+- name: Add the user pdns
+  ansible.builtin.user:
+    name: pdns
+    shell: /bin/nologin
+    groups: pdns
+    append: true

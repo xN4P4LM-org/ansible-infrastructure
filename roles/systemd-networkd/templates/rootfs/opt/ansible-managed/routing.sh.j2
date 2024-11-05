@@ -1,0 +1,12 @@
+{% for cmd in additional_network_commands %}
+# Ensure route table is defined
+if ! grep -q "^{{ cmd.table_id }}[[:space:]]\+{{ cmd.table }}$" /etc/iproute2/rt_tables; then
+  echo "{{ cmd.table_id }} {{ cmd.table }}" >> /etc/iproute2/rt_tables
+fi
+
+# Add default route to table
+ip route add default dev {{ cmd.name }} table {{ cmd.table }}
+
+# Add fwmark rule
+ip rule add fwmark {{ cmd.fwmark }} table {{ cmd.table }}
+{% endfor %}

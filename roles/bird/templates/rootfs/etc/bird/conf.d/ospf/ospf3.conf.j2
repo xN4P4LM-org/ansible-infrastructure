@@ -1,0 +1,47 @@
+{% if ospf_configs is defined %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of filter functions
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for ospf_config in ospf_configs %}
+filter rt_export_ospf_{{ ospf_config.family }}
+{
+    if source ~ [ {{ ospf_config.sources | join(", ") }} ] then {
+        if blackhole_{{ ospf_config.family }}() then reject;
+        if transit_networks_{{ ospf_config.family }}() then reject;
+        accept;
+    }
+    else
+        reject;
+}
+{% endfor %}
+
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the OSPFv3 protocols
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for ospf_config in ospf_configs %}
+protocol ospf v3 OSPF{{ ospf_config.family }} {
+    {#% if ospf_config.family == "v4" %}
+    instance id 0;
+    {% else %}
+    instance id 1;
+    {% endif %#}
+    ip{{ ospf_config.family }} {
+        import all;
+        export filter rt_export_ospf_{{ ospf_config.family }};
+    };
+{% for areas in ospf_areas %}
+    area {{ areas.id }} {
+{% for interface in areas.interfaces %}
+        interface "{{ interface.name }}" {
+            {# type {{ interface.type }};    # Detected by default #}
+            cost {{ interface.cost }};    # Interface metric
+            hello {{ interface.hello }};  # Hello interval
+        };
+{% endfor %}
+    };
+{% endfor %}
+}
+{% endfor %}
+{% endif %}

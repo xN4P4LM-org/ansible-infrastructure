@@ -1,0 +1,67 @@
+# ---
+# - name: Ensure the /etc/apt/trusted.gpg.d directory exists
+#   ansible.builtin.file:
+#     path: /etc/apt/trusted.gpg.d
+#     state: directory
+#     mode: "0755"
+
+# - name: Download Grafana GPG key
+#   ansible.builtin.get_url:
+#     url: https://apt.grafana.com/gpg.key
+#     dest: "/tmp/grafana.gpg.key"
+#     mode: "0644"
+
+# - name: Install the Grafana GPG key
+#   ansible.builtin.shell:
+#     cmd: gpg --dearmor < /tmp/grafana.gpg.key | tee /etc/apt/trusted.gpg.d/grafana.gpg > /dev/null
+#   args:
+#     executable: /bin/bash
+#     creates: /etc/apt/trusted.gpg.d/grafana.gpg
+#   no_log: true
+
+# - name: Add Grafana repository
+#   ansible.builtin.apt_repository:
+#     repo: "deb [signed-by=/etc/apt/trusted.gpg.d/grafana.gpg] https://apt.grafana.com stable main"
+#     state: present
+
+# - name: Create a user for Loki
+#   ansible.builtin.user:
+#     name: loki
+#     state: present
+#     shell: /bin/false
+#     system: true
+#     createhome: false
+
+# - name: Install loki
+#   ansible.builtin.apt:
+#     name: loki
+#     state: present
+#   tags: packages
+#   notify: Restart loki
+
+# - name: Add tmp dir for Loki
+#   ansible.builtin.file:
+#     path: /tmp/loki
+#     state: directory
+#     owner: loki
+#     group: loki
+#     mode: "0755"
+
+# - name: Ensure loki is enabled and running
+#   ansible.builtin.systemd:
+#     name: loki
+#     enabled: true
+#     state: started
+
+# - name: Install promtail
+#   ansible.builtin.apt:
+#     name: promtail
+#     state: present
+#   tags: packages
+#   notify: Restart promtail
+
+# - name: Ensure promtail is enabled and running
+#   ansible.builtin.systemd:
+#     name: promtail
+#     enabled: true
+#     state: started

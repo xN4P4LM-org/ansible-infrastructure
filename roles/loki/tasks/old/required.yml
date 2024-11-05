@@ -1,0 +1,9 @@
+- name: Install required packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - software-properties-common
+    - apt-transport-https
+    - wget
+  tags: packages

@@ -1,0 +1,13 @@
+- name: Restart sshd service (Ubuntu)
+  ansible.builtin.service:
+    name: ssh
+    state: restarted
+  become: true
+  when: ansible_service_mgr == "systemd" and ansible_distribution == 'Ubuntu'
+
+- name: Restart sshd service (Debian)
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+  become: true
+  when: ansible_service_mgr == "systemd" and ansible_distribution == "Debian"

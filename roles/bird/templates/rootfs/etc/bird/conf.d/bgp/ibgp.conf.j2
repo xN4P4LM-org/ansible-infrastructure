@@ -1,0 +1,46 @@
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the iBGP protocols
+### ---------------------------------------------------------------------------------------------------- ###
+{% if ibgp_peers is defined %}
+{% for ibgp_peer in ibgp_peers %}
+{% for connection in ibgp_peer.connections %}
+protocol bgp i_{{ ibgp_peer.name }}_{{ connection.family }} {
+  
+  local as private_asn;
+{% if connection.family == "v4" %}
+  neighbor {{ connection.peer_addr_v4 }} as private_asn;
+{% elif connection.family == "v6" %}
+  neighbor {{ connection.peer_addr_v6 }} as private_asn;
+{% endif %}
+
+  description "{{ connection.description }}";
+
+  multihop 2;
+  {#source address {{ connection.source_address }};#}
+
+  ip{{ connection.family }} {
+    
+    import filter {
+      if source ~ [ RTS_BGP ] then {
+        accept;
+      }
+      reject;
+    };
+
+    export filter {
+      if source ~ [ RTS_STATIC, RTS_BGP ] then {
+        if rt_export_ibgp_{{ connection.family }}() then
+          accept;
+        else
+          reject;
+      }
+      reject;
+    };
+    
+  };
+
+}
+
+{% endfor %}
+{% endfor %}
+{% endif %}

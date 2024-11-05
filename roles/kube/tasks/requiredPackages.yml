@@ -1,0 +1,13 @@
+---
+# update apt cache
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+# install apt packages
+- name: Install apt packages
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - nfs-common

@@ -1,0 +1,290 @@
+### ---------------------------------------------------------------------------------------------------- ###
+## This is the BIRD configuration file
+## It is managed by Ansible
+## Please do not edit it manually unless you know what you are doing
+## Always test your changes with `bird -p` before reloading the service
+### ---------------------------------------------------------------------------------------------------- ##
+
+### ---------------------------------------------------------------------------------------------------- ###
+# These are the global options and configuration for the BIRD daemon
+### ---------------------------------------------------------------------------------------------------- ###
+
+# Configure logging to syslog
+log syslog all;
+
+# These are optional debug options, uncomment to enable
+# debug protocols all;
+# debug channels all;
+
+### ---------------------------------------------------------------------------------------------------- ###
+# This defines the variables used for eBGP sessions
+# Naming convention: <primary|secondary>_<public|private>_asn
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% if router_id is defined %}
+router id {{ router_id }};
+{% endif %}
+
+{% if public_asn is defined %}
+define public_asn = {{ public_asn }};
+{% endif %}
+{% if private_asn is defined %}
+define private_asn = {{ private_asn }};
+{% endif %}
+{% if bird_rpki_validate is defined and bird_rpki_validate == true %}
+
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the configuration for RPKI validation
+### ---------------------------------------------------------------------------------------------------- ###
+
+roa4 table r4;
+roa6 table r6;
+
+protocol rpki {
+  roa4 { 
+    table r4;
+  };
+  roa6 { 
+    table r6;
+  };
+
+  remote "127.0.0.1" port 8282;
+
+  retry keep 90;
+  refresh keep 900;
+  expire keep 172800;
+}
+
+function is_v4_rpki_check()
+{
+  if roa_check(r4, net, bgp_path.last_nonaggregated) = ROA_INVALID then return false;
+  if roa_check(r4, net, bgp_path.last_nonaggregated) = ROA_UNKNOWN then return false;
+  if roa_check(r4, net, bgp_path.last_nonaggregated) = ROA_VALID then return true;
+}
+
+function is_v6_rpki_check()
+{
+  if roa_check(r6, net, bgp_path.last_nonaggregated) = ROA_INVALID then return false;
+  if roa_check(r6, net, bgp_path.last_nonaggregated) = ROA_UNKNOWN then return false;
+  if roa_check(r6, net, bgp_path.last_nonaggregated) = ROA_VALID then return true;
+}
+
+{% for network in public_networks %}
+# Static route ROA for {{ network.family }} via AS {{ public_asn }}
+protocol static {
+  roa{{ network.family }};
+{% if network.family == "4" %}
+  {% for route in network.routes %}
+  route {{ route.base }}/{{ route.prefix_len }} max {{ route.prefix_len }} as {{ public_asn }};
+  {% endfor %}
+{% elif network.family == "6" %}
+  {% for route in network.routes %}
+  route {{ route.base }}/{{ route.prefix_len }} max {{ route.prefix_len }} as {{ public_asn }};
+  {% endfor %}
+{% endif %}
+}
+{% endfor %}
+{% endif %}
+
+{% if transit_networks is defined %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This section contains the transit networks and their subnets
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for network in transit_networks %}
+function transit_networks_v{{ network.family }}()
+{
+  return net ~ [
+{% for route in network.routes %}
+    {{ route.base }}/{{ route.prefix_len }}+{% if not loop.last %},{% endif %} #
+{% endfor %}
+  ];
+}
+
+{% endfor %}
+{% endif %}
+{% if public_networks is defined %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This section contains the public networks and their subnets
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for network in public_networks %}
+function blackhole_v{{ network.family }}() 
+{
+  return net ~ [
+{% for route in network.routes %}
+    {{ route.base }}/{{ route.prefix_len }}{% if not loop.last %},{% endif %} #
+{% endfor %}
+  ];
+}
+
+{% endfor %}
+{% endif %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the martian networks that we want to filter out
+# Naming convention: net_<name>_v<4|6>
+### ---------------------------------------------------------------------------------------------------- ###
+
+function net_martian_v4()
+{
+  return net ~ [
+    0.0.0.0/8+,         # "This" network (RFC 1122)
+    10.0.0.0/8+,        # Private-use networks (RFC 1918)
+    100.64.0.0/10+,     # Carrier-grade NAT (RFC 6598)
+    127.0.0.0/8+,       # Loopback addresses
+    169.254.0.0/16+,    # Link-local_addr_esses (APIPA)
+    172.16.0.0/12+,     # Private-use networks (RFC 1918)
+    192.0.0.0/24+,      # IANA IPv4 Special Purpose Address Registry
+    192.0.2.0/24+,      # TEST-NET-1, documentation/examples (RFC 5737)
+    192.88.99.0/24+,    # 6to4 Relay Anycast (deprecated, RFC 7526)
+    192.168.0.0/16+,    # Private-use networks (RFC 1918)
+    198.18.0.0/15+,     # Network benchmark tests (RFC 2544)
+    198.51.100.0/24+,   # TEST-NET-2, documentation/examples (RFC 5737)
+    203.0.113.0/24+,    # TEST-NET-3, documentation/examples (RFC 5737)
+    224.0.0.0/4+,       # Multicast addresses
+    240.0.0.0/4+,       # Reserved for future use
+    255.255.255.255/32, # Limited broadcast
+    0.0.0.0/0{25,32},   # Prefixes too specific
+    0.0.0.0/0{0,7}      # Prefixes too broad
+  ];
+}
+
+function net_martian_v6()
+{
+  return net ~ [
+    ::/128+,           # Unspecified address
+    ::1/128+,          # Loopback address
+    ::ffff:0:0/96+,    # IPv4-mapped IPv6 addresses
+    64:ff9b::/96+,     # IPv4/IPv6 translation (NAT64)
+    100::/64+,         # Discard prefix
+    2001::/32+,        # Teredo tunneling
+    2001:db8::/32+,    # Documentation addresses
+    2002::/16+,        # 6to4 prefix
+    fc00::/7+,         # Unique local_addr_esses (ULA)
+    fe80::/10+,        # Link-local_addr_esses
+    ff00::/8+,         # Multicast addresses
+    # Reserved and deprecated prefixes
+    fec0::/10+,        # Site-local_addr_esses (deprecated)
+    ::/0{0,7},         # Invalid prefixes (too short)
+    ::/0{64,128}       # Invalid prefixes (too specific)
+  ];
+}
+
+{% if public_ebgp_peers is defined %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition for the public eBGP route filters
+### ---------------------------------------------------------------------------------------------------- ###
+{% for network in ixp_networks %}
+function ixp_networks_v{{ network.family }}() 
+{
+  return net ~ [
+{% for route in network.routes %}
+    {{ route.base }}/{{ route.prefix_len }}+{% if not loop.last %},{% endif %} #
+{% endfor %}
+
+  ];
+}
+
+{% endfor %}
+
+function rt_import_v4()
+{
+  if transit_networks_v4() then return false;
+  if ixp_networks_v4() then return false;
+  if net_martian_v4() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function ixp_import_v4()
+{
+  if !is_v4_rpki_check() then return false;
+  return rt_import_v4();
+}
+
+function rt_export_v4()
+{
+  if !is_v4_rpki_check() then return false;
+  if transit_networks_v4() then return false;
+  if ixp_networks_v4() then return false;
+  if net_martian_v4() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function rt_import_v6()
+{
+  if !is_v6_rpki_check() then return false;
+  if transit_networks_v6() then return false;
+  if ixp_networks_v6() then return false;
+  if net_martian_v6() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function ixp_import_v6()
+{
+  if !is_v6_rpki_check() then return false;
+  return rt_import_v6();
+}
+
+function rt_export_v6()
+{
+  if transit_networks_v6() then return false;
+  if ixp_networks_v6() then return false;
+  if net_martian_v6() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+{% endif %}
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the private eBGP route filters
+### ---------------------------------------------------------------------------------------------------- ###
+
+function rt_import_ibgp_v4()
+{
+  if transit_networks_v4() then return false;
+  if ixp_networks_v4() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function rt_import_ibgp_v6()
+{
+  if transit_networks_v6() then return false;
+  if ixp_networks_v6() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function rt_export_ibgp_v4()
+{
+  if transit_networks_v4() then return false;
+  if ixp_networks_v4() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+function rt_export_ibgp_v6()
+{
+  if transit_networks_v6() then return false;
+  if ixp_networks_v6() then return false;
+  if bgp_path.len > 64 then return false;
+  return true;
+}
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+# These import statements are used to include other configuration files
+### ---------------------------------------------------------------------------------------------------- ###
+
+# Load all files from the conf.d directory
+include "/etc/bird/conf.d/*.conf";
+
+# Load all files from the conf.d subdirectories recursively
+include "/etc/bird/conf.d/**/*.conf";
+
+### ---------------------------------------------------------------------------------------------------- ###
+# End of the BIRD configuration file
+### ---------------------------------------------------------------------------------------------------- ###

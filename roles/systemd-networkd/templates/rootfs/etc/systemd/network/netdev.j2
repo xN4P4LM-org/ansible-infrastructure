@@ -1,0 +1,34 @@
+[NetDev]
+Name = {{ item.name }}
+Kind = {{ item.device_type }}
+{% if item.description is defined and item.description != "" %}
+Description = {{ item.description }}
+{% endif %}
+
+{% if item.device_type == "vlan" %}
+[VLAN]
+Id = {{ item.vlan_id }}
+{% endif %}
+{% if item.device_type == "wireguard" %}
+[WireGuard]
+PrivateKeyFile = {{ item.wireguard_private_key_file }}
+ListenPort = {{ item.wireguard_listen_port }}
+RouteTable = {{ wireguard_table_id }}
+
+[WireGuardPeer]
+{% for peer in item.wireguard_peers %}
+{% if peer.persistent_keepalive is defined and peer.persistent_keepalive != "" %}
+PersistentKeepalive = {{ peer.persistent_keepalive }}
+{% endif %}
+{% if peer.endpoint is defined and peer.endpoint != "" %}
+Endpoint = {{ peer.endpoint }}
+{% endif %}
+{% if peer.public_key is defined and peer.public_key != "" %}
+PublicKey = {{ peer.public_key }}
+{% endif %}
+{% if peer.allowed_ips is defined and peer.allowed_ips != "" %}
+AllowedIPs = {{ peer.allowed_ips | join(",") }}
+{% endif %}
+{% endfor %}
+{% endif %}
+

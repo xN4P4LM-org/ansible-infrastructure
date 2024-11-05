@@ -1,0 +1,104 @@
+[Match]
+Name = {{ item.name }}
+{% if item.device_type is defined and item.device_type == "vlan-parent" %}
+Type = ether
+{% endif %}
+
+[Network]
+{% if item.description is defined and item.description != "" %}
+Description = {{ item.description }}
+{% endif %}
+{% if item.link_local is defined and item.link_local_v6 == true %}
+LinkLocalAddressing = ipv6
+{% endif %}
+{% if item.gateway is defined and item.gateway != "" %}
+Gateway = {{ item.gateway }}
+{% endif %}
+{% if item.gateways is defined %}
+{% for gateway_addresses in item.gateways %}
+Gateway = {{ gateway_addresses }}
+{% endfor %}
+{% endif %}
+{% if item.dhcp is defined and item.dhcp != "" %}
+DHCP = {{ item.dhcp }}
+{% endif %}
+{% if item.dnssec is defined %}
+DNSSEC = {{ item.dnssec }}
+{% endif %}
+{% if item.dns is defined and item.dns != "" %}
+DNS = {{ item.dns | join(" ") }}
+{% endif %}
+{% if item.dns_search is defined and item.dns_search != "" %}
+DNSSearch = {{ item.dns_search | join(" ") }}
+{% endif %}
+{% if item.vlan_dev is defined and item.vlan_dev != "" %}
+
+VLAN = {{ item.vlan_dev }}
+
+{% endif %}
+{% if item.additional_options is defined %}
+{% for option in item.additional_options %}
+{{ option }}
+{% endfor %}
+{% endif %}
+
+{% if item.addresses is defined and item.addresses != "" %}
+{% for address in item.addresses %}
+[Address]
+Address = {{ address }}
+
+{% endfor %}
+{% endif %}
+
+{% if item.nftables is defined %}
+[RoutingPolicyRule]
+FirewallMark = {{ item.nftables.fwmark }}
+Table = {{ item.nftables.route_table_id }}
+
+{% endif %}
+
+{% if item.routing is defined %}
+{% for routes in item.routing %}
+[Route]
+Table = default
+{% if routes.v4 is defined %}
+{% if routes.v4.gateway is defined %}
+Gateway = {{ routes.v4.gateway }}
+{% endif %}
+{% if routes.v4.destination is defined %}
+Destination = {{ routes.v4.destination }}
+{% endif %}
+{% if item.metric is defined %}
+Metric = {{ item.metric }}
+{% endif %}
+{% if item.scope is defined %}
+Scope = {{ item.scope }}
+{% endif %}
+{% if item.mtu is defined %}
+MTUBytes = {{ item.mtu }}
+{% endif %}
+{% if item.mss is defined %}
+TCPAdvertisedMaximumSegmentSize = {{ item.mss }}
+
+{% endif %}
+{% endif %}
+{% if routes.v6 is defined %}
+{% if routes.v6.gateway is defined %}
+Gateway = {{ routes.v6.gateway }}
+{% endif %}
+{% if routes.v6.destination is defined %}
+Destination = {{ routes.v6.destination }}
+{% endif %}
+{% if item.metric is defined %}
+Metric = {{ item.metric }}
+{% endif %}
+{% if item.mtu is defined %}
+MTUBytes = {{ item.mtu }}
+{% endif %}
+{% if item.mss is defined %}
+TCPAdvertisedMaximumSegmentSize = {{ item.mss }}
+
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}

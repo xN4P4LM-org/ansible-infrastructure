@@ -1,0 +1,11 @@
+- name: Restart Loki
+  ansible.builtin.systemd:
+    name: loki
+    state: restarted
+  tags: packages
+
+- name: Restart Promtail
+  ansible.builtin.systemd:
+    name: promtail
+    state: restarted
+  tags: packages

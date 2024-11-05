@@ -1,0 +1,7 @@
+---
+# These are the variables that are common to all hosts in the prod environment
+
+# Defines the deployment environment
+deployment: "default"
+# Defines the user that will be used to connect to the hosts
+ansible_user: "ansible"

@@ -1,0 +1,9 @@
+---
+- name: Ensure recommended sysctl settings are applied
+  ansible.posix.sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+    state: present
+    reload: true
+  with_items: "{{ sysctl_config }}"
+  notify: Restart sysctl

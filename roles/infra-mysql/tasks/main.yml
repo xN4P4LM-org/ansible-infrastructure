@@ -1,0 +1,4 @@
+---
+- name: Run database tasks
+  ansible.builtin.import_tasks: database.yml
+  become: true

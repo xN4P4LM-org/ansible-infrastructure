@@ -1,0 +1,8 @@
+---
+- name: Install Required Packages
+  ansible.builtin.import_tasks: required.yml
+  become: true
+
+- name: Install Loki and Promtail
+  ansible.builtin.import_tasks: loki.yml
+  become: true

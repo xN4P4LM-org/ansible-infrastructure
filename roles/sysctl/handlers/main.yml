@@ -1,0 +1,6 @@
+---
+- name: Restart sysctl
+  ansible.builtin.command: "sysctl -p"
+  register: sysctl_reset
+  tags: wireguard
+  changed_when: sysctl_reset.rc == 0

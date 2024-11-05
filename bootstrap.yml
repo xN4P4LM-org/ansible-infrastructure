@@ -1,0 +1,9 @@
+- name: Apply common role to all servers
+  remote_user: ansible
+  hosts: all
+  gather_facts: true
+  roles:
+    - common
+  vars:
+    ansible_user: ansible
+    deployment: "bootstrap"

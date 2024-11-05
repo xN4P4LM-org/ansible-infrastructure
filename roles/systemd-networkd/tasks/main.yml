@@ -1,0 +1,12 @@
+---
+- name: Install wireguard
+  ansible.builtin.import_tasks: wireguard/main.yml
+  become: true
+
+- name: Configure systemd-networkd
+  ansible.builtin.import_tasks: systemd-networkd/main.yml
+  become: true
+
+- name: Configure fish
+  ansible.builtin.import_tasks: fish/main.yml
+  become: true

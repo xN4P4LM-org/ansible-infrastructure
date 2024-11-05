@@ -1,0 +1,4 @@
+# Run "stayrtr -h" to see the available command line options and their
+# defaults.
+
+STAYRTR_ARGS=-bind 127.0.0.1:8282 -cache /usr/local/var/db/rpki-client/json

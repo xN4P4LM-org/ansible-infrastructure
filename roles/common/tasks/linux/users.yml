@@ -1,0 +1,35 @@
+- name: Add the user and append the groups
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+    groups: "{{ item.groups }}"
+    append: true
+  when: item.groups is defined
+  with_items: "{{ users }}"
+
+- name: Update the user shell
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: "{{ item.shell }}"
+  when: item.shell is defined and item.groups is not defined
+  with_items: "{{ users }}"
+
+- name: Ensure the users .ssh directory exists
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0700"
+  when: item.authorized_keys_url is defined
+  with_items: "{{ users }}"
+
+- name: Copy the prod_authorized_keys to the user
+  ansible.builtin.get_url:
+    url: "{{ item.authorized_keys_url }}"
+    dest: "/home/{{ item.name }}/.ssh/authorized_keys"
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0600"
+  when: item.authorized_keys_url is defined
+  with_items: "{{ users }}"

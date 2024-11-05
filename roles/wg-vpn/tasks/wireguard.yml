@@ -1,0 +1,42 @@
+- name: Install Wireguard
+  apt:
+    name: wireguard
+    state: present
+  tags: wireguard
+
+- name: Install Wireguard Tools
+  apt:
+    name: wireguard-tools
+    state: present
+  tags: wireguard
+
+- name: Enable IP Forwarding
+  sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    sysctl_set: yes
+  tags: wireguard
+  register: ip_forwarding
+
+- name: Enable IP Forwarding
+  sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: 1
+    state: present
+    sysctl_set: yes
+  tags: wireguard
+  register: ip_forwarding
+
+- name: Copy Wireguard Configuration
+  template:
+    src: wg_client.j2
+    dest: /etc/wireguard/wg0.conf
+  tags: wireguard
+
+- name: Enable Wireguard Service
+  systemd:
+    name: "wg-quick@wg0"
+    enabled: yes
+    state: started
+  tags: wireguard

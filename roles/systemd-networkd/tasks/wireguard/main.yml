@@ -1,0 +1,49 @@
+---
+- name: Create wireguard specific routing table
+  ansible.builtin.lineinfile:
+    path: /etc/iproute2/rt_tables
+    line: "{{ wireguard_table_id }} wireguard"
+    create: true
+    mode: "0644"
+  tags: wireguard
+
+- name: Install Wireguard
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+  tags: wireguard
+
+- name: Install Wireguard Tools
+  ansible.builtin.apt:
+    name: wireguard-tools
+    state: present
+  tags: wireguard
+
+- name: Enable IPv4 Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    sysctl_set: true
+  tags: wireguard
+  register: ip_forwarding
+
+- name: Enable IPv6 Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: 1
+    state: present
+    sysctl_set: true
+  tags: wireguard
+  register: ip_forwarding
+
+- name: Create wireguard private key file
+  ansible.builtin.shell:
+    cmd: "umask 027 && wg genkey > {{ item.wireguard_private_key_file }} &&
+      chown root:systemd-network {{ item.wireguard_private_key_file }}"
+  args:
+    creates: "{{ item.wireguard_private_key_file }}"
+  with_items: "{{ networks }}"
+  when: item.device_type is defined and item.device_type == 'wireguard'
+  changed_when: false
+  tags: wireguard

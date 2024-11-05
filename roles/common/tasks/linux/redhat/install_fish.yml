@@ -1,0 +1,17 @@
+# setup fish shell repository
+- name: Add the fish shell repository
+  ansible.builtin.yum_repository:
+    name: fish-shell
+    description: fish shell
+    baseurl: https://download.opensuse.org/repositories/shells:/fish:/release:/3/CentOS_{{ ansible_distribution_major_version }}/
+    gpgcheck: true
+    gpgkey: https://download.opensuse.org/repositories/shells:fish:release:3/CentOS_{{ ansible_distribution_major_version }}/repodata/repomd.xml.key
+    state: present
+  when: ansible_distribution == ['CentOS', 'RedHat', 'Rocky']
+
+# install fish shell
+- name: Install the fish shell
+  ansible.builtin.yum_repository:
+    name: fish
+    state: present
+  when: ansible_distribution == ['CentOS', 'RedHat', 'Rocky']

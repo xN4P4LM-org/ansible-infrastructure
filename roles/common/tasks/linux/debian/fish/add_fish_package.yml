@@ -1,0 +1,49 @@
+# ensure the old repository is removed
+# - name: Remove old fish repository
+#   ansible.builtin.file:
+#     path: /etc/apt/sources.list.d/shells:fish.list
+#     state: absent
+
+# add fish repository
+- name: Add fish repository
+  ansible.builtin.template:
+    src: debian/fish_repo.j2
+    dest: /etc/apt/sources.list.d/shells_fish.list
+    owner: root
+    group: root
+    mode: "0644"
+
+# Ensure the /etc/apt/trusted.gpg.d directory exists
+- name: Ensure the /etc/apt/trusted.gpg.d directory exists
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d
+    state: directory
+    mode: "0755"
+
+# ensure the fish GPG key is removed
+- name: Remove the Fish GPG key
+  ansible.builtin.file:
+    path: /etc/apt/trusted.gpg.d/fish.gpg
+    state: absent
+
+- name: Ensure the tmp key file is removed
+  ansible.builtin.file:
+    path: /tmp/fish.key
+    state: absent
+
+# Download fish GPG key
+- name: Download fish GPG key
+  ansible.builtin.get_url:
+    url: https://download.opensuse.org/repositories/shells:fish/Debian_{{ ansible_distribution_major_version }}/Release.key
+    dest: "/tmp/fish.key"
+    mode: "0644"
+
+# Install the Fish GPG key
+- name: Install the Fish GPG key
+  ansible.builtin.shell:
+    cmd: set -o pipefail |
+      cat /tmp/fish.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/fish.gpg > /dev/null
+    executable: /bin/bash
+  args:
+    creates: /etc/apt/trusted.gpg.d/fish.gpg
+  no_log: true

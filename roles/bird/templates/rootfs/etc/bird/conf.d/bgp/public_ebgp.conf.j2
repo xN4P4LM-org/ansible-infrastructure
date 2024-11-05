@@ -1,0 +1,90 @@
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the public eBGP protocols
+### ---------------------------------------------------------------------------------------------------- ###
+{% if public_ebgp_peers is defined %}
+{% for public_peer in public_ebgp_peers %}
+{% if public_peer.type == "transit" %}
+{% for connection in public_peer.connections %}
+protocol bgp {{ public_peer.name }}_{{ connection.family }} {
+
+  local {{ connection['local_addr_' + connection.family] }} as public_asn;
+  neighbor {{ connection['peer_addr_' + connection.family] }} as {{ public_peer.asn }};
+
+  description "{{ connection.description }}";
+
+  enable extended messages on;
+
+  ip{{ connection.family }} {
+    next hop self;
+
+    import filter {
+
+{% if connection.bgp_community is defined %}
+{% for community in connection.bgp_community %}
+      bgp_community.add(({{ community }}));
+{% endfor %}
+{% endif %}
+
+      if rt_import_{{ connection.family }}() then 
+        accept; 
+      else
+        reject;
+    };
+    export filter {
+      if source ~ [ RTS_STATIC, RTS_BGP ] then {
+
+{% if connection.bgp_community is defined %}
+{% for community in connection.bgp_community %}
+        bgp_community.add(({{ community }}));
+{% endfor %}
+{% endif %}
+
+        if blackhole_{{ connection.family}}() then 
+          accept; 
+        else
+          reject;
+      }
+      reject;
+    };
+  };
+}
+
+{% endfor %}
+{% endif %}
+{% if public_peer.type == "internet-exchange" %}
+{% for connection in public_peer.connections %}
+protocol bgp {{ public_peer.ixp_name}}_{{ public_peer.name }}_{{ connection.family }} {
+
+  local {{ connection['local_addr_' + connection.family] }} as public_asn;
+  neighbor {{ connection['peer_addr_' + connection.family] }} as {{ public_peer.asn }};
+
+  description "{{ connection.description }} - {{ public_peer.ixp_name}}";
+
+  enable extended messages on;
+
+  ip{{ connection.family }} {
+    next hop self;
+
+    import filter {
+      if rt_import_{{ connection.family }}() then 
+        accept; 
+      else
+        reject;
+    };
+
+    export filter {
+      if source ~ [ RTS_STATIC, RTS_BGP ] then {
+        if blackhole_{{ connection.family}}() then 
+          accept; 
+        else
+          reject;
+      }
+      reject;
+    };
+  };
+}
+
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}

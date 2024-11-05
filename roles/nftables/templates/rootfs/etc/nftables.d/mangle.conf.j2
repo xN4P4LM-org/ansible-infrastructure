@@ -1,0 +1,15 @@
+###-----------------###
+###  Mangle Tables  ###
+###-----------------###
+
+table ip mangle {
+    chain output {
+        type route hook output priority -150; policy accept;
+
+        # Mark packets for port 52000
+        udp dport 52000 mark set 1
+
+        # Mark packets for port 53000
+        udp dport 53000 mark set 2
+    }
+}

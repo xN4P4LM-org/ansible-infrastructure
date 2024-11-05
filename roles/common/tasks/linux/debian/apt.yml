@@ -1,0 +1,23 @@
+# Role: common
+# File: tasks/apt.yml
+# Description: This task updates the apt packages and ensures that packages are installed.
+
+- name: Update the apt package cache
+  ansible.builtin.apt:
+    update_cache: true
+
+- name: Upgrade all packages
+  ansible.builtin.apt:
+    upgrade: dist
+    update_cache: true
+    autoremove: true
+    autoclean: true
+    force_apt_get: true
+    dpkg_options: "force-confdef,force-confold"
+    install_recommends: false
+    state: present
+
+- name: Ensure the listed package are installed.
+  ansible.builtin.apt:
+    name: "{{ common_default_debian_packages }}"
+    state: present

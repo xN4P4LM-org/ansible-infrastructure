@@ -1,0 +1,79 @@
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the protocols 
+### ---------------------------------------------------------------------------------------------------- ###
+
+protocol device {
+  scan time 30;
+}
+
+protocol kernel {
+  ipv4 { 
+{% if bird_v4_route_import is defined %}
+    import {{ bird_v4_route_import }};
+{% endif %}
+{% if bird_v4_route_export is defined %}
+    export filter {
+      {% if public_networks is defined and public_networks | selectattr('family', 'equalto', 4) | list | length > 0 %}
+      if source ~ [ RTS_STATIC ] then {
+        if blackhole_v4() then
+          reject;
+        else
+          accept;
+      }
+      {% endif %}
+      accept;
+    };
+{% endif %}
+  };
+}
+
+protocol kernel {
+  ipv6 { 
+{% if bird_v6_route_import is defined %} 
+    import {{ bird_v6_route_import }};
+{% endif %}
+{% if bird_v6_route_export is defined %}
+    export filter {
+      {% if public_networks is defined and public_networks | selectattr('family', 'equalto', 6) | list | length > 0 %}
+      if source ~ [ RTS_STATIC ] then {
+        if blackhole_v6() then
+          reject;
+        else
+          accept;
+      }
+      {% endif %}
+      accept;
+    };
+{% endif %}
+  };
+}
+{% if private_networks is defined %}
+
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the Static protocols for the private networks
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for network in private_device_networks %}
+protocol static {
+  ipv{{ network.family }};
+{% for route in network.routes %}
+  route {{ route.base }}/{{ route.prefix_len }} {{ route.type}}; # \n 
+{% endfor %}
+}
+{% endfor %}
+{% endif %}
+{% if public_networks is defined %}
+
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the Static protocols for public networks
+### ---------------------------------------------------------------------------------------------------- ###
+
+{% for network in public_device_networks %}
+protocol static {
+  ipv{{ network.family }};
+{% for route in network.routes %}
+  route {{ route.base }}/{{ route.prefix_len }} {{ route.type}}; # \n 
+{% endfor %}
+}
+{% endfor %}
+{% endif %}

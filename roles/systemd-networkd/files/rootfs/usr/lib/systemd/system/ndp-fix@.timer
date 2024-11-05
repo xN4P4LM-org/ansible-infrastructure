@@ -1,0 +1,6 @@
+[Unit]
+Description=Runs the ndp-fix script on IP %i
+
+[Timer]
+OnUnitActiveSec=30
+RandomizedDelaySec=10

@@ -1,0 +1,55 @@
+#!/bin/bash
+{% if deployment == "production" %}
+
+echo "***********************************************"
+echo "*       "$'\e[1;31m'"WARNING: PRODUCTION ENVIRONMENT"$'\e[0m'"       *"
+echo "*                                             *"
+echo "*    Access to this system is restricted      *"
+echo "*         to "$'\e[1;34m'"authorized users only"$'\e[0m'".           *"
+echo "*     Unauthorized use of this system is      *"
+echo "*      prohibited and may be subject to       *"
+echo "*        criminal and civil penalties.        *"
+echo "***********************************************"
+
+{% elif deployment == "infra" %}
+
+echo "***********************************************"
+echo "*      "$'\e[1;31m'"WARNING: CRITICAL INFRASTRUCUTRE"$'\e[0m'"       *"
+echo "*                                             *"
+echo "*    Access to this system is restricted      *"
+echo "*         to "$'\e[1;34m'"authorized users only"$'\e[0m'".           *"
+echo "*     Unauthorized use of this system is      *"
+echo "*      prohibited and may be subject to       *"
+echo "*        criminal and civil penalties.        *"
+echo "***********************************************"
+
+{% elif deployment == "proxmox" %}
+
+echo "***********************************************"
+echo "*     "$'\e[1;31m'"WARNING: THIS IS A HYPERVISOR!!!!!!"$'\e[0m'"     *"
+echo "*                                             *"
+echo "*    Access to this system is restricted      *"
+echo "*         to "$'\e[1;34m'"authorized users only"$'\e[0m'".           *"
+echo "*     Unauthorized use of this system is      *"
+echo "*      prohibited and may be subject to       *"
+echo "*        criminal and civil penalties.        *"
+echo "***********************************************"
+
+{% elif deployment == "bootstrap" %}
+echo "***********************************************"
+echo "*      "$'\e[1;31m'"This is the BOOTSTRAP ENVIRONMENT"$'\e[0m'"      *"
+echo "*                                             *"
+echo "*  This system has been bootstraped and is    *"
+echo "*  ready for the deployment of workloads.     *"
+echo "***********************************************"
+
+{% else %}
+
+echo "***********************************************"
+echo "*       "$'\e[1;34m'"WARNING: DEVELOPMENT ENVIRONMENT"$'\e[0m'"      *"
+echo "*                                             *"
+echo "*  This system is for development activities  *" 
+echo "*                   only                      *"
+echo "***********************************************"
+
+{% endif %}

@@ -1,0 +1,4 @@
+- name: Install the fish shell
+  ansible.builtin.apt:
+    name: fish
+    state: present

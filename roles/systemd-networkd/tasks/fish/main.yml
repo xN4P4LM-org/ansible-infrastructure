@@ -1,0 +1,6 @@
+---
+- name: Copy fish prompt
+  ansible.builtin.copy:
+    src: rootfs/etc/fish/config.fish
+    dest: /etc/fish/config.fish
+    mode: "0644"

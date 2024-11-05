@@ -1,0 +1,12 @@
+---
+# - name: Configure Common configuration
+#   hosts: media
+#   become: true
+#   roles:
+#     - common
+
+- name: Setting up Jellyfin
+  hosts: jellyfin
+  become: true
+  roles:
+    - jellyfin

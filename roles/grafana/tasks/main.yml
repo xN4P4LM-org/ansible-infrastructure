@@ -1,0 +1,6 @@
+---
+- name: Install Required Packages
+  ansible.builtin.import_tasks: required.yml
+
+- name: Install Grafana
+  ansible.builtin.import_tasks: grafana.yml

@@ -1,0 +1,55 @@
+### ---------------------------------------------------------------------------------------------------- ###
+# This file contains the definition of the private eBGP protocols
+### ---------------------------------------------------------------------------------------------------- ###
+{% if private_peers is defined %}
+{% for private_peer in private_peers %}
+{% for connection in private_peer.connections %}
+protocol bgp e_{{ private_peer.name }}_{{ connection.family }} {
+
+  local {{ connection['local_addr_' ~ connection.family] }} as private_asn;
+  neighbor {{ connection['peer_addr_' ~ connection.family] }} as {{ private_peer.asn }};
+
+  description "{{ connection.description }}";
+
+  allow local as 1;
+
+{% if private_peer.type == "multihop" %}
+  multihop 3;
+{% endif %}
+{% if private_peer.type == "direct" %}
+  direct;
+{% endif %}
+
+  enable extended messages yes;
+
+  ip{{ connection.family }} {
+
+    {% if private_peer.type == "direct2" %}
+    next hop self;
+    {% endif %}
+
+    import filter {
+      if source ~ [ RTS_BGP ] then {
+        if rt_import_ibgp_{{ connection.family }}() then
+          accept;
+        else
+          reject;
+      }
+      reject;
+    };
+    export filter {
+      if source ~ [ RTS_STATIC, RTS_BGP ] then {
+        if rt_export_ibgp_{{ connection.family }}() then
+          accept;
+        else
+          reject;
+      }
+      reject;
+    };
+  };
+
+}
+
+{% endfor %}
+{% endfor %}
+{% endif %}

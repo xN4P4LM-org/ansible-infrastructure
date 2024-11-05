@@ -1,0 +1,16 @@
+---
+bird_enabled: true
+bird_state: started
+bird_rpki_validate: true
+bird_route_filters: true
+bird_external_aggregations: false
+bird_internal_aggregations: false
+bird_update: false
+
+# Export Policies
+bird_v4_route_export: "all"
+bird_v6_route_export: "all"
+
+# Import Policies
+bird_v4_route_import: "none"
+bird_v6_route_import: "none"

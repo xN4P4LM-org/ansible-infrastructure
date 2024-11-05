@@ -1,0 +1,73 @@
+---
+- name: Ensure sudo is installed
+  ansible.builtin.package:
+    name: sudo
+    state: present
+  when: ansible_distribution == 'Debian' or ansible_distribution == 'Ubuntu'
+
+- name: Enable sudo with no password for the group sudo on Debian
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
+    state: present
+    regexp: "^%sudo"
+    backup: true
+    validate: "/usr/sbin/visudo -cf %s"
+  when: ansible_distribution == 'Debian'
+  notify:
+    - Restart sshd service (Debian)
+
+- name: Enable sudo with no password for the group sudo on Ubuntu
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers
+    line: "%sudo ALL=(ALL:ALL) NOPASSWD: ALL"
+    state: present
+    regexp: "^%sudo"
+    backup: true
+    validate: "/usr/sbin/visudo -cf %s"
+  when: ansible_distribution == 'Ubuntu'
+  notify:
+    - Restart sshd service (Ubuntu)
+
+- name: Add users
+  ansible.builtin.import_tasks: users.yml
+  become: true
+  vars:
+    users:
+      - name: ansible
+        shell: /bin/bash
+        groups: sudo
+        append_groups: sudo,wheel
+        authorized_keys_url: https://github.com/Evil-xN4P4LM.keys
+
+- name: Update MOTD
+  ansible.builtin.import_tasks: motd.yml
+  become: true
+  when: inventory_hostname in groups['all']
+
+- name: Run Debian Tasks
+  ansible.builtin.import_tasks: debian/main.yml
+  become: true
+  when: ansible_os_family == 'Debian'
+
+- name: Run RedHat Tasks
+  ansible.builtin.import_tasks: redhat/main.yml
+  become: true
+  when: ansible_os_family == 'RedHat'
+
+- name: Install fish shell
+  ansible.builtin.import_tasks: fish.yml
+  become: true
+
+- name: Add users
+  ansible.builtin.import_tasks: users.yml
+  become: true
+  vars:
+    users:
+      - name: xn4p4lm
+        shell: /usr/bin/fish
+        groups: sudo
+        append_groups: sudo,wheel
+        authorized_keys_url: https://github.com/xn4p4lm.keys
+      - name: root
+        shell: /usr/bin/fish

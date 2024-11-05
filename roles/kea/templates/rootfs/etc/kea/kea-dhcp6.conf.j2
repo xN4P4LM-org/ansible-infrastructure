@@ -1,0 +1,77 @@
+{
+    "Dhcp6": {
+
+        "interfaces-config": {
+            "interfaces": [ "{{ dhcp_interface }}" ]
+        },
+
+        "control-socket": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea4-ctrl-socket"
+        },
+
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+            "name": "/var/lib/kea/dhcp6.leases"
+        },
+
+        "renew-timer": 900,
+        "rebind-timer": 1800,
+        "valid-lifetime": 3600,
+
+        "option-data": [
+            {
+                "name": "domain-name-servers",
+                "data": "{{ dhcp_v6_dns | join(',') }}"
+            },
+        ],
+
+        "subnet6": [
+            {% for subnet in dhcp_v6_subnets %}
+            {
+                "id": 1,
+
+                "subnet": "",
+
+                {% if subnet.dhcp_v6_prefix_delegation is defined and subnet.dhcp_v6_prefix_delegation == true %}
+                "pd-pools": [
+                    {% for pd_pool in subnet.dhcp_v6_pd_pools %}
+                    {
+                        "prefix": "{{ pd_pool.dhcp_v6_prefix }}",
+                        "prefix-len": {{ pd_pool.dhcp_v6_prefix_len }},
+                        "delegated-len": {{ pd_pool.dhcp_v6_prefix_delegated_len }},
+                        {% if pd_pool.excluded_prefix is defined and pd_pool.excluded_prefix != "" %}
+                        "excluded-prefix": "{{ pd_pool.excluded_prefix }}"
+                        "excluded-prefix-len": {{ pd_pool.excluded_prefix_len }}
+                        {% endif %}
+                    },
+                    {% endfor %}
+                ],
+                {% endif %}
+                {% if subnet.dhcp_v6_pool is defined and subnet.dhcp_v6_pool != "" %}
+                "pools": [ 
+                    {% for pool in subnet.dhcp_v6_pools %}
+                    { "pool": "{{ pool }}" },
+                    {% endfor %}
+                ],
+                {% endif %}
+            },
+            {% endfor %}
+        ],
+
+        "loggers": [
+            {
+                "name": "kea-dhcp6",
+                "output-options": [
+                    {
+                        "output": "syslog:{{ dhcp_name }}-v6-dhcp",
+                    }
+                ],
+                "severity": "INFO",
+                "debuglevel": 0
+            }
+        ],
+
+    },
+}

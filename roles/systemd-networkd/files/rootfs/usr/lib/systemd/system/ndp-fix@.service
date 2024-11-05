@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodically run ndp-fix on IP %i
+
+[Service]
+Type=oneshot
+ExecStart=/opt/ansible-managed/ndp-fix.sh %i
+User=root
+
+[Install]
+WantedBy=network-online.target

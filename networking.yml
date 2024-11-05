@@ -1,0 +1,12 @@
+---
+- name: Apply Edge Networking Configuration
+  hosts: active-bgp-routers
+  gather_facts: true
+  become: true
+  # vars:
+  #   - bird_update: true
+  roles:
+    - common
+    - sysctl
+    - systemd-networkd
+    - bird

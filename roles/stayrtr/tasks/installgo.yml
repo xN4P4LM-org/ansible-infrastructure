@@ -1,0 +1,50 @@
+---
+- name: Query the go api
+  ansible.builtin.uri:
+    url: https://golang.org/dl/?mode=json
+    method: GET
+  register: go_api
+  until: go_api.status == 200
+  retries: 5
+  delay: 5
+
+- name: Set go version
+  ansible.builtin.set_fact:
+    go_version: "{{ go_api.json[0].version }}"
+  changed_when: false
+
+- name: Check installed Go version
+  ansible.builtin.shell: /usr/local/go/bin/go version | awk '{print $3}'
+  register: go_version_output
+  ignore_errors: true
+  changed_when: false
+
+- name: Install Go if versions differ
+  when: go_version_output.stdout != go_version
+  block:
+    - name: Download go tar file
+      ansible.builtin.get_url:
+        url: "https://golang.org/dl/{{ go_version }}.linux-amd64.tar.gz"
+        dest: /var/tmp/{{ go_version }}.linux-amd64.tar.gz
+        mode: "0644"
+
+    - name: Delete previous installation
+      ansible.builtin.command: rm -rf /usr/local/go
+      changed_when: false
+
+    - name: Extract and move new go folder to /usr/local
+      ansible.builtin.unarchive:
+        src: /var/tmp/{{ go_version }}.linux-amd64.tar.gz
+        dest: /usr/local
+        remote_src: true
+      changed_when: false
+
+    - name: Delete downloaded tar file
+      ansible.builtin.shell: rm -rf  /var/tmp/{{ go_version }}.linux-amd64.tar.gz*
+      changed_when: false
+
+    - name: Add go to fish path for all users
+      ansible.builtin.lineinfile:
+        path: /etc/fish/config.fish
+        line: "set -Ux GOPATH /usr/local/go/bin"
+      changed_when: false

@@ -1,0 +1,38 @@
+### --------------------- ###
+###  ISP Services Tables  ###
+### --------------------- ###
+
+## Production ISP Network
+## Interface: enp1s0f0
+
+# IPv4 Rules
+table ip isp_v_service_table {
+    chain CGNAT_SOURCE {
+        type nat hook prerouting priority -100; policy accept;
+
+        ct state new counter mark 0x00000001
+        ip saddr $PROD_ISP_NET ct mark 0x00000001
+        ct mark 0x00000001 counter
+    }
+
+    chain CGNATOUT_COUNTER {
+        type nat hook prerouting priority -100; policy accept;
+
+        counter packets 0 bytes 0
+    }
+
+    chain CGNATOUT_LOG {
+        type nat hook prerouting priority -100; policy accept;
+
+        log prefix "[CGNAT_SOURCE]"
+        counter packets 0 bytes 0
+
+    }
+
+    chain CGNAT_DEST {
+        type nat hook postrouting priority 100; policy accept;
+
+        ip saddr $PROD_ISP_NET ct mark 0x00000001 snat to $PUBLIC_IP
+        masquerade fully-random
+    }
+}

@@ -1,0 +1,20 @@
+---
+- name: Configure common configuration
+  hosts: kube
+  become: true
+  roles:
+    # - common
+    - kube
+# - name: Configure containerd on all hosts
+#   hosts: kube
+#   become: true
+#   roles:
+#     - geerlingguy.containerd
+#   vars:
+#     containerd_config_cgroup_driver_systemd: true
+
+# - name: Configure Kubernetes on all hosts
+#   hosts: kube
+#   become: true
+#   roles:
+#     - geerlingguy.kubernetes

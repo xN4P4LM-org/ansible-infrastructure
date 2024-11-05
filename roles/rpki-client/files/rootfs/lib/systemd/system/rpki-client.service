@@ -1,0 +1,11 @@
+[Unit]
+Description=OpenBSD RPKI validator
+Documentation=man:rpki-client(8)
+
+[Service]
+ExecStart=/usr/local/sbin/rpki-client -j -v
+Type=oneshot
+User=root
+CacheDirectory=rpki
+StateDirectory=rpki
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX

@@ -1,0 +1,23 @@
+- name: Download InfluxDB 2.0 CLI
+  ansible.builtin.get_url:
+    url: "{{ influx_db_client_url }}"
+    dest: /tmp/influxdb.tar.gz
+    mode: "755"
+
+- name: Create extract directory
+  ansible.builtin.file:
+    path: /tmp/influx
+    state: directory
+    mode: "0755"
+
+- name: Extract InfluxDB 2.0 CLI
+  ansible.builtin.unarchive:
+    src: /tmp/influxdb.tar.gz
+    dest: /tmp/influx/
+    remote_src: true
+    mode: "0755"
+
+- name: Move InfluxDB 2.0 CLI
+  ansible.builtin.shell:
+    cmd: mv /tmp/influx/influx /usr/local/bin/influx
+    creates: /usr/local/bin/influx

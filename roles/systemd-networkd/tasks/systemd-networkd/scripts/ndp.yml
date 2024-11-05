@@ -1,0 +1,39 @@
+---
+- name: Ensure target directory exists
+  ansible.builtin.file:
+    path: /opt/ansible-managed
+    state: directory
+    mode: "0755"
+
+- name: Copy ndp-fix files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - src: "rootfs/opt/ansible-managed/ndp-fix.sh"
+      dest: "/opt/ansible-managed/ndp-fix.sh"
+      mode: "0744"
+    - src: "rootfs/usr/lib/systemd/system/ndp-fix@.service"
+      dest: "/usr/lib/systemd/system/ndp-fix@.service"
+      mode: "0644"
+    - src: "rootfs/usr/lib/systemd/system/ndp-fix@.timer"
+      dest: "/usr/lib/systemd/system/ndp-fix@.timer"
+      mode: "0644"
+
+- name: Enable ndp-fix service
+  ansible.builtin.systemd:
+    name: "ndp-fix@{{ item.address }}_{{ item.device }}.service"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ ndp_fix_ips }}"
+
+- name: Enable ndp-fix timer
+  ansible.builtin.systemd:
+    name: "ndp-fix@{{ item.address }}_{{ item.device }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop: "{{ ndp_fix_ips }}"
+  when: ndp_fix_ips is defined

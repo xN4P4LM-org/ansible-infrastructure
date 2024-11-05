@@ -1,0 +1,140 @@
+---
+# Query the github release API to pull the latest release version
+- name: Query the github release API
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/rpki-client/rpki-client-portable/releases/latest
+    method: GET
+    headers:
+      Accept: "application/vnd.github.v3+json"
+  register: rpki_client_release
+  until: rpki_client_release.status == 200
+  retries: 5
+  delay: 5
+
+- name: Check installed rpki-client version
+  ansible.builtin.shell: /usr/local/sbin/rpki-client -V 2>&1 | grep -o '[0-9]\+\.[0-9]\+'
+  register: rpki_client_version_output
+  ignore_errors: true
+  changed_when: false
+
+- name: Install rpki-client if versions differ
+  when: rpki_client_version_output.stdout != rpki_client_release.json.tag_name
+  block:
+    - name: Ensure the _rpki-client user exists
+      ansible.builtin.user:
+        name: _rpki-client
+        state: present
+        createhome: false
+        system: true
+        shell: /usr/sbin/nologin
+
+    - name: Ensure the apt package is not installed
+      ansible.builtin.apt:
+        name: rpki-client
+        state: absent
+      changed_when: false
+
+    - name: Insure required packages are installed
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      with_items:
+        - rpki-trust-anchors
+        - libtls-dev
+        - libexpat1-dev
+        - rsync
+      changed_when: false
+
+    - name: Download rpki-client tar file
+      ansible.builtin.get_url:
+        # yamllint disable
+        url: https://github.com/rpki-client/rpki-client-portable/releases/download/{{ rpki_client_release.json.tag_name }}/rpki-client-{{ rpki_client_release.json.tag_name }}.tar.gz
+        # yamllint enable
+        dest: /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}.tar.gz
+        mode: "0644"
+
+    - name: Delete previous installation
+      ansible.builtin.command: rm -rf /usr/local/sbin/rpki-client
+      register: removed_existing_client
+      changed_when: removed_existing_client.rc != 0
+
+    - name: Extract the rpki-client tar file to build the binary
+      ansible.builtin.unarchive:
+        src: /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}.tar.gz
+        dest: /var/tmp
+        remote_src: true
+
+    - name: Configure the rpki-client binary
+      ansible.builtin.command:
+        cmd: "./configure"
+        chdir: /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}
+      register: rpki_configure
+      changed_when: rpki_configure.rc != 0
+
+    - name: Build the rpki-client binary executable
+      ansible.builtin.command:
+        cmd: "make"
+        chdir: /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}
+      register: rpki_build
+      changed_when: rpki_build.rc != 0
+
+    - name: Install the rpki-client binary
+      ansible.builtin.command:
+        cmd: "make install"
+        chdir: /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}
+      register: rpki_install
+      changed_when: rpki_install.rc != 0
+
+    - name: Delete downloaded tar file
+      ansible.builtin.shell: rm -rf  /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}.tar.gz*
+      changed_when: false
+
+    - name: Remove the extracted directory
+      ansible.builtin.command: rm -rf /var/tmp/rpki-client-{{ rpki_client_release.json.tag_name }}
+      changed_when: false
+
+    - name: Reload the systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Ensure the rpki-client service is enabled
+      ansible.builtin.systemd:
+        name: rpki-client
+        enabled: true
+
+    - name: Ensure the rpki-client timer is enabled
+      ansible.builtin.systemd:
+        name: rpki-client.timer
+        enabled: true
+
+- name: Copy the rpki-client systemd service file
+  ansible.builtin.copy:
+    src: rootfs/lib/systemd/system/rpki-client.service
+    dest: /lib/systemd/system/rpki-client.service
+    mode: "0644"
+
+- name: Ensure the Trust Anchor Locators directory exists
+  ansible.builtin.file:
+    path: /usr/local/etc/rpki
+    state: directory
+    mode: "0755"
+
+- name: Find all the Trust Anchor Locators in the /etc/tals directory
+  ansible.builtin.find:
+    paths: /etc/tals
+    patterns: "*.tal"
+  register: tals
+
+- name: Ensure the Trust Anchor are copied to the correct location
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: /usr/local/etc/rpki/{{ item.path | basename }}
+    remote_src: true
+    mode: "0644"
+  loop: "{{ tals.files }}"
+
+- name: Copy the rpki-client systemd timer file
+  ansible.builtin.copy:
+    src: rootfs/lib/systemd/system/rpki-client.timer
+    dest: /lib/systemd/system/rpki-client.timer
+    mode: "0644"

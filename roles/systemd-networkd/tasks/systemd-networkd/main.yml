@@ -1,0 +1,45 @@
+---
+- name: Create systemd-networkd link files
+  ansible.builtin.template:
+    src: "templates/rootfs/etc/systemd/network/link.j2"
+    dest: "/etc/systemd/network/{{ item.priority }}-{{ item.name }}.link"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ networks | selectattr('link', 'true') }}"
+  notify: Restart systemd-networkd
+
+- name: Create systemd-networkd netdev files
+  ansible.builtin.template:
+    src: "templates/rootfs/etc/systemd/network/netdev.j2"
+    dest: "/etc/systemd/network/{{ item.priority }}-{{ item.name }}.netdev"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ networks | selectattr('netdev', 'true') }}"
+  notify: Restart systemd-networkd
+
+- name: Create systemd-networkd network files
+  ansible.builtin.template:
+    src: "templates/rootfs/etc/systemd/network/network.j2"
+    dest: "/etc/systemd/network/{{ item.priority }}-{{ item.name }}.network"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ networks | selectattr('network', 'true') }}"
+  notify: Restart systemd-networkd
+
+- name: Setup routes on primary core router
+  ansible.builtin.import_tasks:
+    file: scripts/routing.yml
+  when: additional_network_commands is defined
+
+- name: Configure IP cron job
+  ansible.builtin.import_tasks:
+    file: scripts/ip.yml
+  when: ip_commands is defined
+
+- name: Configure ndp-fix script
+  ansible.builtin.import_tasks:
+    file: scripts/ndp.yml
+  when: ndp_fix_ips is defined
